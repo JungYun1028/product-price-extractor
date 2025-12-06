@@ -1,4 +1,19 @@
-# Python
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.log
+target/
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# Python (legacy)
 __pycache__/
 *.py[cod]
 *$py.class
