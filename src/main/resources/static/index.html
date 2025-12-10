@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Price Extractor</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛒 Product Price Extractor</h1>
+            <p class="subtitle">마트 매대 사진에서 제품 가격을 자동으로 추출</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="showTab('store')">🏪 거래처별 조회</button>
+            <button class="tab-btn" onclick="showTab('review')">✅ 검수</button>
+            <button class="tab-btn" onclick="showTab('dashboard')">📊 대시보드</button>
+        </nav>
+
+        <!-- 거래처별 조회 탭 -->
+        <div id="store-tab" class="tab-content active">
+            <div class="store-section">
+                <h2>거래처별 제품 가격 조회</h2>
+                
+                <!-- 필터 섹션 -->
+                <div class="filter-section" style="margin-bottom: 20px;">
+                    <div class="filter-group">
+                        <label>지역사업부 (Branch)</label>
+                        <select id="branchFilter" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 200px;" onchange="filterStores()">
+                            <option value="">전체</option>
+                            <option value="서울">서울</option>
+                            <option value="경기남부">경기남부</option>
+                            <option value="경기북부">경기북부</option>
+                            <option value="부산경남">부산경남</option>
+                            <option value="경북">경북</option>
+                            <option value="호남">호남</option>
+                            <option value="제주">제주</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>채널 (Channel)</label>
+                        <select id="channelFilter" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 200px;" onchange="filterStores()">
+                            <option value="">전체</option>
+                            <option value="KA">KA</option>
+                            <option value="GT">GT</option>
+                            <option value="FS">FS</option>
+                        </select>
+                    </div>
+                    <button class="btn-secondary" onclick="resetStoreFilters()" style="margin-top: 25px;">초기화</button>
+                </div>
+
+                <!-- 거래처 리스트 -->
+                <div id="storeListContainer">
+                    <div id="storeList" class="store-list">
+                        <p class="loading">로딩 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래처 상세 페이지 -->
+        <div id="store-detail-page" class="store-detail-page" style="display: none;">
+            <div class="store-detail-section">
+                <!-- 뒤로가기 버튼 -->
+                <button class="btn-back" onclick="goBackToStoreList()" style="margin-bottom: 20px;">
+                    ← 거래처 목록으로
+                </button>
+
+                <!-- 거래처 정보 헤더 -->
+                <div id="storeDetailHeader" class="store-detail-header">
+                    <h2 id="storeDetailName"></h2>
+                    <div id="storeDetailInfo" class="store-detail-info"></div>
+                </div>
+
+                <!-- 전체 사진 슬라이드쇼 -->
+                <div id="imageSlideshow" class="image-slideshow-container" style="margin-bottom: 30px;">
+                    <h3>촬영 사진 (최신순)</h3>
+                    <div class="slideshow-wrapper">
+                        <button class="slideshow-btn prev" onclick="changeSlide(-1)">❮</button>
+                        <div id="slideshowImages" class="slideshow-images"></div>
+                        <button class="slideshow-btn next" onclick="changeSlide(1)">❯</button>
+                    </div>
+                    <div class="slideshow-indicator">
+                        <span id="currentSlide">1</span> / <span id="totalSlides">0</span>
+                    </div>
+                </div>
+
+                <!-- 제품 목록 테이블 -->
+                <div id="storeProductsTableContainer" style="margin-bottom: 50px;">
+                    <table id="storeProductsTable" class="products-table">
+                        <thead>
+                            <tr>
+                                <th>촬영일자</th>
+                                <th>제품명</th>
+                                <th>가격</th>
+                                <th>촬영</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storeProductsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 이미지 업로드 섹션 -->
+                <div class="upload-section" style="margin-top: 50px; padding: 30px; background: #f8f9fa; border-radius: 10px;">
+                    <h3 style="color: #333; margin-bottom: 10px;">📸 매대 사진 업로드</h3>
+                    <p style="color: #666; margin-bottom: 20px;">이 거래처의 매대 사진을 촬영하여 업로드하세요. AI가 자동으로 제품과 가격을 인식합니다.</p>
+                    
+                    <div class="upload-area" id="detailUploadArea" ondrop="handleDetailDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" style="margin-bottom: 20px;">
+                        <div class="upload-icon">📁</div>
+                        <p>이미지를 드래그 앤 드롭하거나 클릭하여 선택하세요</p>
+                        <p class="upload-hint">최대 10장까지 업로드 가능 (JPG, PNG, 최대 10MB)</p>
+                        <input type="file" id="detailFileInput" multiple accept="image/*" style="display: none;" onchange="handleDetailFileSelect(event)">
+                        <button class="btn-primary" onclick="document.getElementById('detailFileInput').click()">파일 선택</button>
+                    </div>
+                    
+                    <div id="detailFileList" class="file-list"></div>
+                    
+                    <button class="btn-submit" onclick="uploadDetailImages()" id="detailUploadBtn" disabled style="margin-top: 20px;">제품 가격 추출 시작</button>
+                    
+                    <div id="detailUploadProgress" class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="detailProgressFill"></div>
+                        </div>
+                        <p id="detailProgressText">분석 중...</p>
+                    </div>
+                    
+                    <div id="detailExtractResult" class="result-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 이미지 슬라이드 모달 -->
+        <div id="imageModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeImageModal()">&times;</span>
+                <div class="modal-slideshow">
+                    <button class="modal-slideshow-btn prev" onclick="changeModalSlide(-1)">❮</button>
+                    <img id="modalImage" src="" alt="Product Image">
+                    <button class="modal-slideshow-btn next" onclick="changeModalSlide(1)">❯</button>
+                </div>
+                <div class="modal-indicator">
+                    <span id="modalCurrentSlide">1</span> / <span id="modalTotalSlides">0</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 검수 탭 -->
+        <div id="review-tab" class="tab-content">
+            <div class="review-section">
+                <h2>검수 대기 항목</h2>
+                <p style="color: #666; margin-bottom: 20px;">AI가 자동 인식한 제품 중 신뢰도가 낮은 항목들입니다. 확인 후 승인해주세요.</p>
+                <div id="reviewList" class="review-list">
+                    <p class="loading">로딩 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 대시보드 탭 -->
+        <div id="dashboard-tab" class="tab-content">
+            <div class="dashboard-section">
+                <h2>대시보드 통계</h2>
+                <div id="dashboardStats" class="stats-container">
+                    <p class="loading">로딩 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
+

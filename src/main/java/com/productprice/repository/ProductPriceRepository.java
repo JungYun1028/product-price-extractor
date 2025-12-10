@@ -19,16 +19,24 @@ public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long
     Page<ProductPrice> findByStatus(String status, Pageable pageable);
 
     @Query("SELECT p FROM ProductPrice p WHERE " +
-           "(:productName IS NULL OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :productName, '%'))) AND " +
-           "(:storeName IS NULL OR p.metadata LIKE CONCAT('%', :storeName, '%')) AND " +
+           "(:productName IS NULL OR :productName = '' OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :productName, '%'))) AND " +
+           "(:storeId IS NULL OR p.store.id = :storeId) AND " +
            "(:startDate IS NULL OR p.extractedAt >= :startDate) AND " +
            "(:endDate IS NULL OR p.extractedAt <= :endDate)")
     Page<ProductPrice> findWithFilters(
             @Param("productName") String productName,
-            @Param("storeName") String storeName,
+            @Param("storeId") Long storeId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable
+    );
+
+    List<ProductPrice> findByStoreIdOrderByExtractedAtDesc(Long storeId);
+    
+    List<ProductPrice> findByStoreIdAndExtractedAtBetweenOrderByExtractedAtDesc(
+            Long storeId, 
+            LocalDateTime startDate, 
+            LocalDateTime endDate
     );
 
     List<ProductPrice> findByStatusOrderByExtractedAtDesc(String status);

@@ -1,5 +1,6 @@
 package com.productprice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ProductPrice {
 
     @Id
@@ -51,5 +53,10 @@ public class ProductPrice {
 
     @Column(name = "status", length = 50)
     private String status; // AUTO_APPROVED, PENDING_REVIEW, APPROVED, REJECTED
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "store_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Store store; // 거래처 정보
 }
 

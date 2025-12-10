@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -35,7 +37,7 @@ public class ProductController {
     @PostMapping(value = "/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductPriceExtractResponse> extractProductPrices(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "store_name", required = false) String storeName,
+            @RequestParam(value = "store_id", required = false) Long storeId,
             @RequestParam(value = "location", required = false) String location) {
 
         try {
@@ -65,7 +67,7 @@ public class ProductController {
 
             // Extract products
             List<ProductPrice> products = productPriceService.extractAndSaveProducts(
-                    file.getBytes(), relativePath, storeName, location);
+                    file.getBytes(), relativePath, storeId, location);
 
             long pendingCount = products.stream()
                     .filter(p -> "PENDING_REVIEW".equals(p.getStatus()))
@@ -95,12 +97,12 @@ public class ProductController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize,
             @RequestParam(required = false) String product_name,
-            @RequestParam(required = false) String store_name,
+            @RequestParam(required = false) Long store_id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start_date,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end_date) {
 
         Page<ProductPrice> productPage = productPriceService.getProductList(
-                page, pageSize, product_name, store_name, start_date, end_date);
+                page, pageSize, product_name, store_id, start_date, end_date);
 
         ProductPriceListResponse response = new ProductPriceListResponse(
                 productPage.getContent(),
@@ -143,6 +145,27 @@ public class ProductController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/store/{storeId}")
+    public ResponseEntity<List<ProductPrice>> getProductsByStore(
+            @PathVariable Long storeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        
+        LocalDateTime dateTime = date != null ? date.atStartOfDay() : null;
+        List<ProductPrice> products = productPriceService.getProductsByStoreAndDate(storeId, dateTime);
+        return ResponseEntity.ok(products);
+    }
+
+    @PostMapping("/manual")
+    public ResponseEntity<ProductPrice> createProductManually(
+            @RequestParam Long store_id,
+            @RequestParam String product_name,
+            @RequestParam BigDecimal price,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime extracted_at) {
+        
+        ProductPrice product = productPriceService.createProductManually(store_id, product_name, price, extracted_at);
+        return ResponseEntity.ok(product);
     }
 }
 
