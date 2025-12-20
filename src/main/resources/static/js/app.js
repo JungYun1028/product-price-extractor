@@ -57,21 +57,6 @@ function handleDragLeave(event) {
     event.currentTarget.classList.remove('dragover');
 }
 
-function addFiles(files) {
-    const validFiles = files.filter(file => {
-        return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
-    });
-    
-    if (selectedFiles.length + validFiles.length > 10) {
-        alert('최대 10개까지만 업로드할 수 있습니다.');
-        return;
-    }
-    
-    selectedFiles = [...selectedFiles, ...validFiles];
-    updateFileList();
-    document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
-}
-
 function updateFileList() {
     const fileList = document.getElementById('fileList');
     fileList.innerHTML = '';
@@ -198,12 +183,21 @@ async function loadProductList(page = 1) {
         
         displayProductList(data);
     } catch (error) {
-        document.getElementById('productList').innerHTML = `<p class="loading">오류: ${error.message}</p>`;
+        const productList = document.getElementById('productList');
+        if (productList) {
+            productList.innerHTML = `<p class="loading">오류: ${error.message}</p>`;
+        } else {
+            console.warn('productList element not found; skipping render');
+        }
     }
 }
 
 function displayProductList(data) {
     const productList = document.getElementById('productList');
+    if (!productList) {
+        console.warn('productList element not found; skipping render');
+        return;
+    }
     
     if (data.items.length === 0) {
         productList.innerHTML = '<p class="loading">등록된 제품이 없습니다.</p>';
@@ -631,12 +625,12 @@ function displayStoreProducts(products, store) {
     
     // products가 배열인지 다시 확인
     if (!Array.isArray(products)) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="loading">데이터 형식 오류가 발생했습니다.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" class="loading">데이터 형식 오류가 발생했습니다.</td></tr>';
         return;
     }
     
     if (products.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="loading">등록된 제품이 없습니다.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" class="loading">등록된 제품이 없습니다.</td></tr>';
         document.getElementById('imageSlideshow').style.display = 'none';
         return;
     }
@@ -648,21 +642,19 @@ function displayStoreProducts(products, store) {
         return dateB - dateA; // 최신순
     });
     
-    // 이미지 경로 수집 (중복 제거, 최신순)
+    // 원본 이미지 경로 수집 (슬라이드쇼용)
     const imageMap = new Map();
     products.forEach(item => {
-        if (item.imagePath && !imageMap.has(item.imagePath)) {
-            imageMap.set(item.imagePath, item);
+        const orig = item.originalImagePath || item.imagePath;
+        if (orig && !imageMap.has(orig)) {
+            imageMap.set(orig, { ...item, imagePath: orig });
         }
     });
-    // 이미지도 최신순으로 정렬
     currentStoreImages = Array.from(imageMap.values()).sort((a, b) => {
         const dateA = new Date(a.extractedAt);
         const dateB = new Date(b.extractedAt);
-        return dateB - dateA; // 최신순
+        return dateB - dateA;
     });
-    
-    // 전체 사진 슬라이드쇼 표시
     displayImageSlideshow(currentStoreImages);
     
     // 테이블 생성
@@ -671,13 +663,23 @@ function displayStoreProducts(products, store) {
         const date = new Date(item.extractedAt).toLocaleDateString('ko-KR');
         const time = new Date(item.extractedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         const escapedPath = item.imagePath ? item.imagePath.replace(/'/g, "\\'") : '';
+        
         html += `
-            <tr>
+            <tr data-product-id="${item.id}">
+                <td style="text-align:center;"><input type="checkbox" class="product-checkbox" data-product-id="${item.id}"></td>
                 <td>${date} ${time}</td>
-                <td>${item.productName}</td>
-                <td>${parseInt(item.price).toLocaleString()}원</td>
                 <td>
-                    ${item.imagePath ? `<button class="btn-view-image" onclick="openImageModal('${escapedPath}', ${index})">촬영</button>` : '-'}
+                    <input type="text" value="${item.productName}" 
+                           id="productName_${item.id}" class="edit-input"
+                           style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                </td>
+                <td>
+                    <input type="number" value="${parseInt(item.price)}" 
+                           id="productPrice_${item.id}" class="edit-input"
+                           style="width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">원
+                </td>
+                <td>
+                    ${item.imagePath ? `<button class="btn-view-image" onclick="openImageModal('${escapedPath}', ${index})">📷 사진보기</button>` : '-'}
                 </td>
             </tr>
         `;
@@ -812,57 +814,35 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// 거래처 상세 페이지 - 파일 업로드 관련
+// 거래처 상세 페이지 - 파일 업로드 관련 (크롭 에디터로 단일 업로드)
 let detailFiles = [];
 
 function handleDetailFileSelect(event) {
-    const files = Array.from(event.target.files);
-    addDetailFiles(files);
+    const file = event.target.files[0];
+    if (!file) return;
+    loadImageToCropEditor(file); // crop-editor.js
 }
 
 function handleDetailDrop(event) {
     event.preventDefault();
     event.currentTarget.classList.remove('dragover');
-    const files = Array.from(event.dataTransfer.files);
-    addDetailFiles(files);
+    const file = event.dataTransfer.files[0];
+    if (!file) return;
+    loadImageToCropEditor(file); // crop-editor.js
 }
 
-function addDetailFiles(files) {
-    const validFiles = files.filter(file => {
-        return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
-    });
-    
-    if (detailFiles.length + validFiles.length > 10) {
-        alert('최대 10개까지만 업로드할 수 있습니다.');
-        return;
-    }
-    
-    detailFiles = [...detailFiles, ...validFiles];
-    updateDetailFileList();
-    document.getElementById('detailUploadBtn').disabled = detailFiles.length === 0;
-}
-
+// 멀티파일 리스트는 더 이상 사용하지 않지만, 호출 시 안전하게 무시
 function updateDetailFileList() {
     const fileList = document.getElementById('detailFileList');
+    if (!fileList) return;
     fileList.innerHTML = '';
-    
-    detailFiles.forEach((file, index) => {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <span>📷</span>
-            <span class="file-name">${file.name}</span>
-            <span class="file-size">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
-            <button onclick="removeDetailFile(${index})" style="margin-left: 10px; padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer;">삭제</button>
-        `;
-        fileList.appendChild(fileItem);
-    });
 }
 
 function removeDetailFile(index) {
     detailFiles.splice(index, 1);
     updateDetailFileList();
-    document.getElementById('detailUploadBtn').disabled = detailFiles.length === 0;
+    const btn = document.getElementById('detailUploadBtn');
+    if (btn) btn.disabled = detailFiles.length === 0;
 }
 
 async function uploadDetailImages() {
@@ -1256,12 +1236,21 @@ async function loadProductList(page = 1) {
         
         displayProductList(data);
     } catch (error) {
-        document.getElementById('productList').innerHTML = `<p class="loading">오류: ${error.message}</p>`;
+        const productList = document.getElementById('productList');
+        if (productList) {
+            productList.innerHTML = `<p class="loading">오류: ${error.message}</p>`;
+        } else {
+            console.warn('productList element not found; skipping render');
+        }
     }
 }
 
 function displayProductList(data) {
     const productList = document.getElementById('productList');
+    if (!productList) {
+        console.warn('productList element not found; skipping render');
+        return;
+    }
     
     if (data.items.length === 0) {
         productList.innerHTML = '<p class="loading">등록된 제품이 없습니다.</p>';

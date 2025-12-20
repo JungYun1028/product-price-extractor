@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductPriceExtractResponse {
     private Boolean success;
-    private List<ProductPrice> extractedProducts;
+    private List<ProductPrice> products; // extractedProducts -> products로 변경
     private Integer count;
     private Integer pendingReviewCount;
     private String message;

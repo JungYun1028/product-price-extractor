@@ -34,7 +34,10 @@ public class ProductPrice {
     private BigDecimal price;
 
     @Column(name = "image_path", length = 500)
-    private String imagePath;
+    private String imagePath; // 크롭된 가격표 이미지 경로
+
+    @Column(name = "original_image_path", length = 500)
+    private String originalImagePath; // 원본 이미지 경로
 
     @Column(name = "extracted_at")
     @CreationTimestamp
@@ -53,6 +56,9 @@ public class ProductPrice {
 
     @Column(name = "status", length = 50)
     private String status; // AUTO_APPROVED, PENDING_REVIEW, APPROVED, REJECTED
+
+    @Column(name = "is_discount")
+    private Boolean isDiscount; // 할인 상품 여부
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "store_id")

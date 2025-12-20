@@ -797,6 +797,73 @@ h2 {
     font-weight: 600;
 }
 
+/* 이미지 편집기 스타일 */
+.image-editor {
+    animation: fadeIn 0.3s ease-in;
+}
+
+.canvas-container {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#imageCanvas {
+    background: #f0f0f0;
+}
+
+.region-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.region-item:hover {
+    background: #e9ecef;
+    border-color: #ff1493;
+}
+
+.region-item.ai-detected {
+    border: 2px solid #ff1493;
+    background: linear-gradient(to right, #fff0f8, #f8f9fa);
+}
+
+.region-item.ai-detected::before {
+    content: "🤖 AI";
+    display: inline-block;
+    padding: 2px 8px;
+    background: #ff1493;
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.region-info {
+    flex: 1;
+    color: #495057;
+    font-size: 14px;
+}
+
+.region-delete-btn {
+    padding: 5px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.region-delete-btn:hover {
+    background: #c82333;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .container {

@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -147,6 +148,25 @@ public class ProductController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductPrice> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates) {
+
+        try {
+            String productName = updates.containsKey("productName") ? 
+                (String) updates.get("productName") : null;
+            BigDecimal price = updates.containsKey("price") ? 
+                new BigDecimal(updates.get("price").toString()) : null;
+            
+            ProductPrice updated = productPriceService.updateProduct(id, productName, price);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            log.error("Error updating product", e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/store/{storeId}")
     public ResponseEntity<List<ProductPrice>> getProductsByStore(
             @PathVariable Long storeId,
@@ -166,6 +186,79 @@ public class ProductController {
         
         ProductPrice product = productPriceService.createProductManually(store_id, product_name, price, extracted_at);
         return ResponseEntity.ok(product);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        try {
+            productPriceService.deleteProduct(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            log.error("Error deleting product {}: {}", id, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping(value = "/extract-regions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductPriceExtractResponse> extractProductPricesFromRegions(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("store_id") Long storeId,
+            @RequestParam("regions") String regionsJson) {
+
+        try {
+            // Validate file
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ProductPriceExtractResponse(false, List.of(), 0, 0, "File is empty"));
+            }
+
+            if (!file.getContentType().startsWith("image/")) {
+                return ResponseEntity.badRequest()
+                        .body(new ProductPriceExtractResponse(false, List.of(), 0, 0, "Only image files are allowed"));
+            }
+
+            log.info("Processing image with regions for store: {}", storeId);
+            log.info("Regions JSON: {}", regionsJson);
+
+            // Save original image
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String originalFileName = "original_" + timestamp + "_" + file.getOriginalFilename();
+            Path originalFilePath = uploadPath.resolve(originalFileName);
+            Files.write(originalFilePath, file.getBytes());
+
+            String originalRelativePath = UPLOAD_DIR + "/" + originalFileName;
+
+            // Extract products from regions (cropped images will be saved in service)
+            List<ProductPrice> products = productPriceService.extractAndSaveProductsFromRegions(
+                    file.getBytes(), UPLOAD_DIR, storeId, regionsJson, originalRelativePath);
+
+            long pendingCount = products.stream()
+                    .filter(p -> "PENDING_REVIEW".equals(p.getStatus()))
+                    .count();
+
+            return ResponseEntity.ok(new ProductPriceExtractResponse(
+                    true,
+                    products,
+                    products.size(),
+                    (int) pendingCount,
+                    "Successfully extracted " + products.size() + " products from " + 
+                    products.stream().map(p -> p.getMetadata()).filter(m -> m != null && m.contains("region")).count() + " regions"
+            ));
+
+        } catch (IOException e) {
+            log.error("Error processing file", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ProductPriceExtractResponse(false, List.of(), 0, 0, "File processing error"));
+        } catch (Exception e) {
+            log.error("Error extracting products from regions", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ProductPriceExtractResponse(false, List.of(), 0, 0, "Failed to extract products: " + e.getMessage()));
+        }
     }
 }
 

@@ -24,6 +24,10 @@ public class OpenAIService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<ProductInfo> extractProductsFromImage(byte[] imageBytes) {
+        return extractProductsFromImage(imageBytes, false);
+    }
+
+    public List<ProductInfo> extractProductsFromImage(byte[] imageBytes, boolean singleProductMode) {
         try {
             if (openAIConfig.getApiKey() == null || openAIConfig.getApiKey().isEmpty()) {
                 log.error("OpenAI API key is not configured");
@@ -40,8 +44,8 @@ public class OpenAIService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(openAIConfig.getApiKey());
 
-            // Build request body
-            String requestBody = buildRequestBody(imageBase64);
+            // Build request body (단일 제품 모드면 다른 프롬프트 사용)
+            String requestBody = buildRequestBody(imageBase64, singleProductMode);
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
@@ -59,12 +63,21 @@ public class OpenAIService {
     }
 
     private String buildRequestBody(String imageBase64) {
+        return buildRequestBody(imageBase64, false);
+    }
+
+    private String buildRequestBody(String imageBase64, boolean singleProductMode) {
         try {
+            // 영역 선택 모드면 단일 제품 추출 프롬프트 사용
+            String prompt = singleProductMode ? 
+                PromptUtil.SINGLE_PRODUCT_EXTRACTION_PROMPT : 
+                PromptUtil.PRODUCT_PRICE_EXTRACTION_PROMPT;
+            
             // Build JSON request body for OpenAI Vision API
             String content = String.format(
                     "{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"%s\"}," +
                     "{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/jpeg;base64,%s\"}}]}",
-                    PromptUtil.PRODUCT_PRICE_EXTRACTION_PROMPT.replace("\"", "\\\"").replace("\n", "\\n"),
+                    prompt.replace("\"", "\\\"").replace("\n", "\\n"),
                     imageBase64
             );
 
@@ -92,12 +105,44 @@ public class OpenAIService {
                 
                 if (productsNode != null && productsNode.isArray()) {
                     for (JsonNode productNode : productsNode) {
+                        // Extract product name
                         String productName = productNode.get("product_name").asText();
-                        double price = productNode.get("price").asDouble();
-                        // Default confidence score (OpenAI doesn't provide this, so we estimate)
-                        double confidenceScore = 0.9;
                         
-                        products.add(new ProductInfo(productName, price, confidenceScore));
+                        // Extract position
+                        String position = productNode.has("position") ? productNode.get("position").asText() : "";
+                        
+                        // Extract and parse price (remove commas and "원")
+                        String priceStr = productNode.get("price").asText();
+                        double price = parsePrice(priceStr);
+                        
+                        // Extract discount info
+                        boolean isDiscount = false;
+                        String originalPriceStr = null;
+                        String discountType = null;
+                        
+                        if (productNode.has("discount") && !productNode.get("discount").isNull()) {
+                            JsonNode discountNode = productNode.get("discount");
+                            isDiscount = true;
+                            originalPriceStr = discountNode.has("original_price") ? 
+                                    discountNode.get("original_price").asText() : null;
+                            discountType = discountNode.has("discount_type") ? 
+                                    discountNode.get("discount_type").asText() : null;
+                        }
+                        
+                        // Extract confidence
+                        String confidenceStr = productNode.has("confidence") ? 
+                                productNode.get("confidence").asText() : "high";
+                        double confidenceScore = "high".equalsIgnoreCase(confidenceStr) ? 0.9 : 0.5;
+                        
+                        products.add(new ProductInfo(
+                                productName, 
+                                price, 
+                                confidenceScore, 
+                                isDiscount, 
+                                position, 
+                                originalPriceStr, 
+                                discountType
+                        ));
                     }
                 }
             }
@@ -106,7 +151,29 @@ public class OpenAIService {
         }
         return products;
     }
+    
+    private double parsePrice(String priceStr) {
+        if (priceStr == null || priceStr.isEmpty()) {
+            return 0.0;
+        }
+        // Remove commas, "원", "₩", and spaces
+        String cleaned = priceStr.replaceAll("[,원₩\\s]", "");
+        try {
+            return Double.parseDouble(cleaned);
+        } catch (NumberFormatException e) {
+            log.warn("Failed to parse price: {}", priceStr);
+            return 0.0;
+        }
+    }
 
-    public record ProductInfo(String productName, Double price, Double confidenceScore) {}
+    public record ProductInfo(
+            String productName, 
+            Double price, 
+            Double confidenceScore, 
+            Boolean isDiscount,
+            String position,
+            String originalPrice,
+            String discountType
+    ) {}
 }
 
