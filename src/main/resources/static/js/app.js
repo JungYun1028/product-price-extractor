@@ -448,20 +448,46 @@ function displayStoreList(stores) {
         return;
     }
     
-    let html = '<div class="store-grid">';
-    stores.forEach(store => {
-        const displayText = `${store.storeName}${store.branch ? ' [' + store.branch + ']' : ''}${store.channel ? ' (' + store.channel + ')' : ''}`;
+    let html = `
+        <table class="stores-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">No</th>
+                    <th>거래처명</th>
+                    <th style="width: 120px;">소속지점</th>
+                    <th style="width: 100px;">채널</th>
+                    <th style="width: 120px;">담당자</th>
+                    <th style="width: 100px;">조회</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    stores.forEach((store, index) => {
         html += `
-            <div class="store-item" onclick="selectStore(${store.id}, '${store.storeName.replace(/'/g, "\\'")}')">
-                <div class="store-name">${store.storeName}</div>
-                <div class="store-info">
-                    ${store.branch ? `<span class="store-badge branch">${store.branch}</span>` : ''}
-                    ${store.channel ? `<span class="store-badge channel">${store.channel}</span>` : ''}
-                </div>
-            </div>
+            <tr class="store-row" onclick="selectStore(${store.id}, '${store.storeName.replace(/'/g, "\\'")}')">
+                <td style="text-align: center; color: #666;">${index + 1}</td>
+                <td style="font-weight: 600; color: #004A98;">${store.storeName}</td>
+                <td style="text-align: center;">
+                    <span class="badge badge-branch">${store.branch || '-'}</span>
+                </td>
+                <td style="text-align: center;">
+                    <span class="badge badge-channel">${store.channel || '-'}</span>
+                </td>
+                <td style="text-align: center;">${store.manager || '-'}</td>
+                <td style="text-align: center;">
+                    <button class="btn-view" onclick="event.stopPropagation(); selectStore(${store.id}, '${store.storeName.replace(/'/g, "\\'")}')">
+                        상세보기
+                    </button>
+                </td>
+            </tr>
         `;
     });
-    html += '</div>';
+    
+    html += `
+            </tbody>
+        </table>
+    `;
     
     storeList.innerHTML = html;
 }
@@ -907,7 +933,7 @@ async function uploadDetailImages() {
                         <h3>✅ ${file.name}</h3>
                         <p><strong>${result.count}개 제품 추출 완료</strong></p>
                         ${productsHtml}
-                        ${result.pendingReviewCount > 0 ? `<p style="color: #f59e0b; margin-top: 10px;">⚠️ ${result.pendingReviewCount}개 항목 검수 필요</p>` : '<p style="color: #10b981; margin-top: 10px;">✅ 모든 항목 자동 승인</p>'}
+                        ${result.pendingReviewCount > 0 ? `<p style="color: #f59e0b; margin-top: 10px;">⚠️ ${result.pendingReviewCount}개 항목 검수 필요</p>` : '<p style="color: #0066CC; margin-top: 10px;">✅ 모든 항목 자동 승인</p>'}
                     </div>
                 `;
             } else {

@@ -22,33 +22,38 @@
         <!-- 거래처별 조회 탭 -->
         <div id="store-tab" class="tab-content active">
             <div class="store-section">
-                <h2>거래처별 제품 가격 조회</h2>
+                <div style="background: linear-gradient(135deg, #004A98 0%, #0066CC 100%); padding: 25px; border-radius: 10px; margin-bottom: 25px;">
+                    <h2 style="color: white; margin: 0; font-size: 1.6em;">📋 거래처별 제품 가격 조회</h2>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 0.95em;">거래처를 선택하여 촬영된 제품 가격 정보를 확인하세요</p>
+                </div>
                 
                 <!-- 필터 섹션 -->
-                <div class="filter-section" style="margin-bottom: 20px;">
-                    <div class="filter-group">
-                        <label>지역사업부 (Branch)</label>
-                        <select id="branchFilter" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 200px;" onchange="filterStores()">
-                            <option value="">전체</option>
-                            <option value="서울">서울</option>
-                            <option value="경기남부">경기남부</option>
-                            <option value="경기북부">경기북부</option>
-                            <option value="부산경남">부산경남</option>
-                            <option value="경북">경북</option>
-                            <option value="호남">호남</option>
-                            <option value="제주">제주</option>
-                        </select>
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">지역사업부</label>
+                            <select id="branchFilter" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em;" onchange="filterStores()">
+                                <option value="">전체</option>
+                                <option value="서울">서울</option>
+                                <option value="경기남부">경기남부</option>
+                                <option value="경기북부">경기북부</option>
+                                <option value="부산경남">부산경남</option>
+                                <option value="경북">경북</option>
+                                <option value="호남">호남</option>
+                                <option value="제주">제주</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">채널</label>
+                            <select id="channelFilter" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em;" onchange="filterStores()">
+                                <option value="">전체</option>
+                                <option value="KA">KA</option>
+                                <option value="GT">GT</option>
+                                <option value="FS">FS</option>
+                            </select>
+                        </div>
+                        <button class="btn-secondary" onclick="resetStoreFilters()" style="padding: 12px 24px;">🔄 초기화</button>
                     </div>
-                    <div class="filter-group">
-                        <label>채널 (Channel)</label>
-                        <select id="channelFilter" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 200px;" onchange="filterStores()">
-                            <option value="">전체</option>
-                            <option value="KA">KA</option>
-                            <option value="GT">GT</option>
-                            <option value="FS">FS</option>
-                        </select>
-                    </div>
-                    <button class="btn-secondary" onclick="resetStoreFilters()" style="margin-top: 25px;">초기화</button>
                 </div>
 
                 <!-- 거래처 리스트 -->
@@ -133,6 +138,7 @@
                         
                         <div class="editor-controls" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn-primary" onclick="startDrawingRegion()" id="addRegionBtn">✏️ 영역 추가</button>
+                            <button class="btn-warning" onclick="toggleDeleteMode()" id="deleteRegionBtn">❌ 선택 삭제</button>
                             <button class="btn-secondary" onclick="clearAllRegions()">🗑️ 전체 삭제</button>
                             <button class="btn-submit" onclick="analyzeRegions()" id="analyzeBtn">🔍 AI 분석 실행</button>
                             <button class="btn-secondary" onclick="cancelCropEditor()">취소</button>

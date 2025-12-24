@@ -18,7 +18,7 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #004A98 0%, #0066CC 100%);
     color: white;
     padding: 30px;
     border-radius: 10px;
@@ -58,13 +58,13 @@ header h1 {
 
 .tab-btn:hover {
     background: #f0f0f0;
-    border-color: #667eea;
+    border-color: #0066CC;
 }
 
 .tab-btn.active {
-    background: #667eea;
+    background: #0066CC;
     color: white;
-    border-color: #667eea;
+    border-color: #0066CC;
 }
 
 .tab-content {
@@ -87,11 +87,11 @@ h2 {
 
 /* 업로드 영역 */
 .upload-area {
-    border: 3px dashed #667eea;
+    border: 3px dashed #0066CC;
     border-radius: 10px;
     padding: 60px 20px;
     text-align: center;
-    background: #f8f9ff;
+    background: #eff6ff;
     cursor: pointer;
     transition: all 0.3s;
     margin-bottom: 20px;
@@ -140,7 +140,7 @@ h2 {
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #0066CC;
 }
 
 .file-list {
@@ -178,7 +178,7 @@ h2 {
 }
 
 .btn-primary, .btn-submit {
-    background: #667eea;
+    background: #0066CC;
     color: white;
 }
 
@@ -203,6 +203,32 @@ h2 {
     background: #5a6268;
 }
 
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+.btn-warning.active {
+    background: #ef4444;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
 .progress-container {
     margin: 20px 0;
 }
@@ -218,7 +244,7 @@ h2 {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #0066CC, #764ba2);
     width: 0%;
     transition: width 0.3s;
     animation: pulse 1.5s infinite;
@@ -238,11 +264,11 @@ h2 {
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 15px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #0066CC;
 }
 
 .result-item.success {
-    border-left-color: #10b981;
+    border-left-color: #0066CC;
 }
 
 .result-item.warning {
@@ -310,7 +336,7 @@ h2 {
 .product-price {
     font-size: 1.5em;
     font-weight: 700;
-    color: #667eea;
+    color: #0066CC;
 }
 
 .product-meta {
@@ -374,7 +400,7 @@ h2 {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0066CC 0%, #764ba2 100%);
     color: white;
     padding: 30px;
     border-radius: 10px;
@@ -410,14 +436,14 @@ h2 {
 }
 
 .pagination button:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #0066CC;
+    color: #0066CC;
 }
 
 .pagination button.active {
-    background: #667eea;
+    background: #0066CC;
     color: white;
-    border-color: #667eea;
+    border-color: #0066CC;
 }
 
 .loading {
@@ -426,61 +452,85 @@ h2 {
     color: #666;
 }
 
-/* 거래처 리스트 */
+/* 거래처 리스트 - 테이블 형태 */
 .store-list {
     margin-top: 20px;
 }
 
-.store-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.store-item {
+.stores-table {
+    width: 100%;
+    border-collapse: collapse;
     background: white;
-    border: 2px solid #e0e0e0;
     border-radius: 8px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.store-item:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    transform: translateY(-2px);
+.stores-table thead {
+    background: linear-gradient(135deg, #004A98 0%, #0066CC 100%);
+    color: white;
 }
 
-.store-name {
-    font-size: 1.1em;
+.stores-table th {
+    padding: 15px;
+    text-align: left;
     font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
+    font-size: 0.95em;
+    letter-spacing: 0.3px;
 }
 
-.store-info {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.stores-table tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background-color 0.2s;
 }
 
-.store-badge {
-    padding: 4px 10px;
+.stores-table tbody tr:hover {
+    background: #f0f9ff;
+    cursor: pointer;
+}
+
+.stores-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.stores-table td {
+    padding: 15px;
+    color: #374151;
+}
+
+.badge {
+    padding: 4px 12px;
     border-radius: 12px;
     font-size: 0.85em;
     font-weight: 500;
+    display: inline-block;
 }
 
-.store-badge.branch {
-    background: #e3f2fd;
-    color: #1976d2;
+.badge-branch {
+    background: #dbeafe;
+    color: #004A98;
 }
 
-.store-badge.channel {
-    background: #f3e5f5;
-    color: #7b1fa2;
+.badge-channel {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.btn-view {
+    padding: 6px 16px;
+    background: #0066CC;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-view:hover {
+    background: #004A98;
+    transform: scale(1.05);
 }
 
 /* 제품 테이블 */
@@ -494,7 +544,7 @@ h2 {
 }
 
 .products-table thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0066CC 0%, #764ba2 100%);
     color: white;
 }
 
@@ -519,7 +569,7 @@ h2 {
 
 .btn-view-image {
     padding: 6px 12px;
-    background: #667eea;
+    background: #0066CC;
     color: white;
     border: none;
     border-radius: 5px;
@@ -730,7 +780,7 @@ h2 {
 
 .btn-back {
     padding: 10px 20px;
-    background: #667eea;
+    background: #0066CC;
     color: white;
     border: none;
     border-radius: 8px;
@@ -745,7 +795,7 @@ h2 {
 }
 
 .store-detail-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0066CC 0%, #764ba2 100%);
     color: white;
     padding: 30px;
     border-radius: 10px;
@@ -779,7 +829,7 @@ h2 {
 
 .review-store {
     font-weight: 600;
-    color: #667eea;
+    color: #0066CC;
 }
 
 .review-image {
@@ -886,8 +936,13 @@ h2 {
         grid-template-columns: 1fr;
     }
 
-    .store-grid {
-        grid-template-columns: 1fr;
+    .stores-table {
+        font-size: 0.85em;
+    }
+    
+    .stores-table th,
+    .stores-table td {
+        padding: 10px;
     }
 
     .products-table {

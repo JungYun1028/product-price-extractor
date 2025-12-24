@@ -260,5 +260,16 @@ public class ProductController {
                     .body(new ProductPriceExtractResponse(false, List.of(), 0, 0, "Failed to extract products: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/save-selected")
+    public ResponseEntity<List<ProductPrice>> saveSelectedProducts(@RequestBody List<ProductPrice> selectedProducts) {
+        try {
+            List<ProductPrice> saved = productPriceService.saveSelectedProducts(selectedProducts);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            log.error("Error saving selected products", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
 

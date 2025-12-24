@@ -228,8 +228,7 @@ public class ProductPriceService {
                                 product.setImagePath(croppedImagePath);
                                 product.setOriginalImagePath(originalImagePath);
                                 product.setConfidenceScore(info.confidenceScore());
-                                product.setStatus(info.confidenceScore() != null && info.confidenceScore() >= 0.8
-                                        ? "AUTO_APPROVED" : "PENDING_REVIEW");
+                                product.setStatus("PENDING_REVIEW"); // 사용자가 선택 후 저장하면 APPROVED로 변경
                                 product.setStore(store);
                                 product.setIsDiscount(info.isDiscount() != null ? info.isDiscount() : false);
                                 
@@ -250,13 +249,8 @@ public class ProductPriceService {
                 }
             }
             
-            // Save all products
-            if (!allProducts.isEmpty()) {
-                allProducts = repository.saveAll(allProducts);
-                log.info("Saved {} products from {} regions", allProducts.size(), regions.size());
-            } else {
-                log.warn("No products extracted from any regions");
-            }
+            // 저장하지 않고 분석 결과만 반환 (사용자가 선택해서 저장)
+            log.info("Analyzed {} products from {} regions (not saved yet)", allProducts.size(), regions.size());
             
             return allProducts;
             
@@ -264,6 +258,21 @@ public class ProductPriceService {
             log.error("Error extracting products from regions", e);
             throw new RuntimeException("Failed to extract products from regions: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional
+    public List<ProductPrice> saveSelectedProducts(List<ProductPrice> selectedProducts) {
+        // 선택된 제품들을 APPROVED 상태로 저장
+        selectedProducts.forEach(product -> {
+            product.setStatus("APPROVED"); // 사용자가 선택했으므로 승인
+            if (product.getConfidenceScore() == null) {
+                product.setConfidenceScore(0.5); // 기본값
+            }
+        });
+        
+        List<ProductPrice> saved = repository.saveAll(selectedProducts);
+        log.info("Saved {} selected products", saved.size());
+        return saved;
     }
 }
 
