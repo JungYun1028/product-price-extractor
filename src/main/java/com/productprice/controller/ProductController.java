@@ -2,7 +2,6 @@ package com.productprice.controller;
 
 import com.productprice.dto.ProductPriceExtractResponse;
 import com.productprice.dto.ProductPriceListResponse;
-import com.productprice.dto.ReviewRequest;
 import com.productprice.model.ProductPrice;
 import com.productprice.service.ProductPriceService;
 import lombok.RequiredArgsConstructor;
@@ -114,38 +113,6 @@ public class ProductController {
         );
 
         return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/review")
-    public ResponseEntity<ProductPriceListResponse> getPendingReviewProducts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int pageSize) {
-
-        Page<ProductPrice> productPage = productPriceService.getPendingReviewProducts(page, pageSize);
-
-        ProductPriceListResponse response = new ProductPriceListResponse(
-                productPage.getContent(),
-                productPage.getTotalElements(),
-                page,
-                pageSize,
-                productPage.getTotalPages()
-        );
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{id}/review")
-    public ResponseEntity<ProductPrice> updateProductReview(
-            @PathVariable Long id,
-            @RequestBody ReviewRequest request) {
-
-        try {
-            ProductPrice updated = productPriceService.updateProductReview(
-                    id, request.getProductName(), request.getPrice(), request.getAction());
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
     }
 
     @PutMapping("/{id}")

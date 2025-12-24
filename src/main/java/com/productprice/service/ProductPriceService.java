@@ -63,8 +63,7 @@ public class ProductPriceService {
                         product.setPrice(BigDecimal.valueOf(info.price()));
                         product.setImagePath(imagePath);
                         product.setConfidenceScore(info.confidenceScore());
-                        product.setStatus(info.confidenceScore() != null && info.confidenceScore() >= 0.8 
-                                ? "AUTO_APPROVED" : "PENDING_REVIEW");
+                        product.setStatus("APPROVED"); // 사용자가 선택해서 저장함
                         product.setStore(finalStore);
                         
                         // Set metadata
@@ -119,29 +118,6 @@ public class ProductPriceService {
         product.setExtractedAt(extractedAt != null ? extractedAt : LocalDateTime.now());
         product.setStatus("APPROVED");
         
-        return repository.save(product);
-    }
-
-    public Page<ProductPrice> getPendingReviewProducts(int page, int pageSize) {
-        Pageable pageable = PageRequest.of(page - 1, pageSize);
-        return repository.findByStatus("PENDING_REVIEW", pageable);
-    }
-
-    @Transactional
-    public ProductPrice updateProductReview(Long id, String productName, BigDecimal price, String action) {
-        ProductPrice product = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-
-        if (productName != null) {
-            product.setProductName(productName);
-        }
-        if (price != null) {
-            product.setPrice(price);
-        }
-        if ("APPROVE".equals(action)) {
-            product.setStatus("APPROVED");
-        }
-
         return repository.save(product);
     }
 
@@ -228,7 +204,7 @@ public class ProductPriceService {
                                 product.setImagePath(croppedImagePath);
                                 product.setOriginalImagePath(originalImagePath);
                                 product.setConfidenceScore(info.confidenceScore());
-                                product.setStatus("PENDING_REVIEW"); // 사용자가 선택 후 저장하면 APPROVED로 변경
+                                product.setStatus("APPROVED"); // 사용자가 선택해서 저장함
                                 product.setStore(store);
                                 product.setIsDiscount(info.isDiscount() != null ? info.isDiscount() : false);
                                 

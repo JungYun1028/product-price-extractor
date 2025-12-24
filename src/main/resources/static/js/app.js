@@ -24,8 +24,6 @@ function showTab(tabName) {
         }
     } else if (tabName === 'list') {
         loadProductList();
-    } else if (tabName === 'review') {
-        loadReviewList();
     } else if (tabName === 'dashboard') {
         loadDashboard();
     } else if (tabName === 'upload') {
@@ -125,7 +123,7 @@ async function uploadImages() {
                 successCount += result.count;
                 resultContainer.innerHTML += `
                     <div class="result-item success">
-                        <h3>✅ ${file.name}</h3>
+                        <h3>${file.name}</h3>
                         <p>${result.count}개 제품 추출 완료</p>
                         ${result.pendingReviewCount > 0 ? `<p style="color: #f59e0b;">⚠️ ${result.pendingReviewCount}개 항목 검수 필요</p>` : ''}
                     </div>
@@ -263,93 +261,6 @@ function resetFilters() {
     document.getElementById('startDateFilter').value = '';
     document.getElementById('endDateFilter').value = '';
     loadProductList(1);
-}
-
-// 검수 목록 로드
-async function loadReviewList() {
-    try {
-        const response = await fetch('/api/products/review?page=1&page_size=50');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        displayReviewList(data.items || []);
-    } catch (error) {
-        console.error('검수 목록 로드 오류:', error);
-        document.getElementById('reviewList').innerHTML = `<p class="loading">오류: ${error.message}</p>`;
-    }
-}
-
-function displayReviewList(items) {
-    const reviewList = document.getElementById('reviewList');
-    
-    if (items.length === 0) {
-        reviewList.innerHTML = '<p class="loading">✅ 검수 대기 항목이 없습니다. 모든 제품이 승인되었습니다!</p>';
-        return;
-    }
-    
-    let html = '';
-    items.forEach(item => {
-        const storeName = item.store ? item.store.storeName : '거래처 미지정';
-        const imageInfo = item.imagePath ? item.imagePath.split('/').pop() : '사진 정보 없음';
-        
-        html += `
-            <div class="review-item">
-                <div class="review-header">
-                    <span class="review-store">🏪 ${storeName}</span>
-                    <span class="review-image">📷 ${imageInfo}</span>
-                    <span class="review-date">📅 ${new Date(item.extractedAt).toLocaleDateString('ko-KR')}</span>
-                </div>
-                <div class="product-header">
-                    <div class="product-name">${item.productName}</div>
-                    <div class="product-price">${parseInt(item.price).toLocaleString()}원</div>
-                </div>
-                <div class="product-meta">
-                    ${item.confidenceScore ? `<span class="confidence-low">⚠️ 신뢰도: ${(item.confidenceScore * 100).toFixed(1)}%</span>` : ''}
-                </div>
-                <div class="review-controls">
-                    <input type="text" id="review_name_${item.id}" value="${item.productName}" placeholder="제품명">
-                    <input type="number" id="review_price_${item.id}" value="${item.price}" placeholder="가격">
-                    <button class="btn-primary" onclick="approveProduct(${item.id})">승인</button>
-                    ${item.imagePath ? `<button class="btn-secondary" onclick="openImageModal('${item.imagePath.replace(/'/g, "\\'")}', 0)">사진 보기</button>` : ''}
-                </div>
-            </div>
-        `;
-    });
-    
-    reviewList.innerHTML = html;
-}
-
-async function approveProduct(id) {
-    const productName = document.getElementById(`review_name_${id}`).value;
-    const price = document.getElementById(`review_price_${id}`).value;
-    
-    try {
-        const response = await fetch(`/api/products/${id}/review`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                product_name: productName,
-                price: parseFloat(price),
-                action: 'APPROVE'
-            })
-        });
-        
-        if (response.ok) {
-            alert('승인되었습니다.');
-            loadReviewList();
-            if (currentTab === 'list') {
-                loadProductList();
-            }
-        }
-    } catch (error) {
-        alert('오류: ' + error.message);
-    }
 }
 
 // 대시보드 로드

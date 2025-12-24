@@ -15,7 +15,6 @@
 
         <nav class="tabs">
             <button class="tab-btn active" onclick="showTab('store')">🏪 거래처별 조회</button>
-            <button class="tab-btn" onclick="showTab('review')">✅ 검수</button>
             <button class="tab-btn" onclick="showTab('dashboard')">📊 대시보드</button>
         </nav>
 
@@ -174,18 +173,6 @@
                 </div>
                 <div class="modal-indicator">
                     <span id="modalCurrentSlide">1</span> / <span id="modalTotalSlides">0</span>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- 검수 탭 -->
-        <div id="review-tab" class="tab-content">
-            <div class="review-section">
-                <h2>검수 대기 항목</h2>
-                <p style="color: #666; margin-bottom: 20px;">AI가 자동 인식한 제품 중 신뢰도가 낮은 항목들입니다. 확인 후 승인해주세요.</p>
-                <div id="reviewList" class="review-list">
-                    <p class="loading">로딩 중...</p>
                 </div>
             </div>
         </div>
