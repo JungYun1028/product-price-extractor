@@ -1,0 +1,29 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Uploads (will be created at runtime)
+uploads/
+
+# Secrets
+secret.json
+.env
+
+# README and docs
+README.md
+*.md
+

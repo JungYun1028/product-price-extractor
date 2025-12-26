@@ -250,5 +250,29 @@ public class ProductPriceService {
         log.info("Saved {} selected products", saved.size());
         return saved;
     }
+
+    @Transactional
+    public ProductPrice updateProduct(Long id, String productName, BigDecimal price) {
+        ProductPrice product = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+        
+        if (productName != null && !productName.isEmpty()) {
+            product.setProductName(productName);
+        }
+        if (price != null) {
+            product.setPrice(price);
+        }
+        product.setStatus("APPROVED"); // 수동 수정 시 승인 처리
+        product.setConfidenceScore(1.0); // 수동 수정 시 100% 신뢰도
+        
+        log.info("Updated product {}: name={}, price={}", id, productName, price);
+        return repository.save(product);
+    }
+
+    @Transactional
+    public void deleteProduct(Long id) {
+        repository.deleteById(id);
+        log.info("Deleted product with id: {}", id);
+    }
 }
 
