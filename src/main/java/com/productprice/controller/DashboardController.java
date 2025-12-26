@@ -1,13 +1,11 @@
 package com.productprice.controller;
 
+import com.productprice.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -16,19 +14,31 @@ import java.util.Map;
 @Slf4j
 public class DashboardController {
 
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getDashboardStats(
-            @RequestParam(required = false) String store_name,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start_date,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end_date) {
+    private final DashboardService dashboardService;
 
-        // TODO: Implement dashboard statistics
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("total_products", 0);
-        stats.put("total_stores", 0);
-        stats.put("pending_reviews", 0);
-        
-        return ResponseEntity.ok(stats);
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        try {
+            Map<String, Object> stats = dashboardService.getDashboardStats();
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            log.error("Error fetching dashboard stats", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/store/{storeId}/price-history")
+    public ResponseEntity<Map<String, Object>> getStorePriceHistory(@PathVariable Long storeId) {
+        try {
+            Map<String, Object> response = Map.of(
+                    "storeId", storeId,
+                    "priceHistory", dashboardService.getStorePriceHistory(storeId)
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error fetching store price history for store: {}", storeId, e);
+            return ResponseEntity.status(500).build();
+        }
     }
 }
 

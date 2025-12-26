@@ -6,17 +6,42 @@ let storeFiles = [];
 // 탭 전환
 function showTab(tabName) {
     currentTab = tabName;
+    
+    // 모든 탭 콘텐츠 숨기기
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
+    
+    // 모든 탭 버튼 비활성화
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    document.getElementById(tabName + '-tab').classList.add('active');
-    event.target.classList.add('active');
+    // 거래처 상세 페이지 숨기기
+    const detailPage = document.getElementById('store-detail-page');
+    if (detailPage) {
+        detailPage.style.display = 'none';
+    }
     
+    // 선택된 탭 활성화
+    const targetTab = document.getElementById(tabName + '-tab');
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+    
+    // 클릭된 버튼 활성화
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+    
+    // 탭별 로직
     if (tabName === 'store') {
+        // 거래처 탭으로 돌아올 때 목록 페이지 표시
+        const storeTab = document.getElementById('store-tab');
+        if (storeTab) {
+            storeTab.style.display = 'block';
+        }
+        
         if (allStores.length === 0) {
             loadStores();
         } else {
@@ -264,34 +289,218 @@ function resetFilters() {
 }
 
 // 대시보드 로드
+let dashboardData = null;
+
 async function loadDashboard() {
     try {
         const response = await fetch('/api/dashboard/stats');
-        const data = await response.json();
+        dashboardData = await response.json();
         
-        displayDashboard(data);
+        displayProductPriceComparison(dashboardData.productPriceComparison || []);
+        displayTopStores(dashboardData.topStores || []);
+        displayRecentPriceUpdates(dashboardData.recentPriceUpdates || []);
+        
+        // 검색 기능 활성화
+        setupProductSearch();
     } catch (error) {
-        document.getElementById('dashboardStats').innerHTML = `<p class="loading">오류: ${error.message}</p>`;
+        console.error('대시보드 로드 오류:', error);
+        document.getElementById('productPriceComparison').innerHTML = `<p class="loading">오류: ${error.message}</p>`;
     }
 }
 
-function displayDashboard(data) {
-    const dashboardStats = document.getElementById('dashboardStats');
+// 1. 제품별 가격 비교 표시
+function displayProductPriceComparison(products) {
+    const container = document.getElementById('productPriceComparison');
     
-    dashboardStats.innerHTML = `
-        <div class="stat-card">
-            <div class="stat-label">전체 제품 수</div>
-            <div class="stat-value">${data.total_products || 0}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">전체 매장 수</div>
-            <div class="stat-value">${data.total_stores || 0}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">검수 대기</div>
-            <div class="stat-value">${data.pending_reviews || 0}</div>
-        </div>
-    `;
+    if (products.length === 0) {
+        container.innerHTML = '<p class="loading">등록된 제품이 없습니다.</p>';
+        return;
+    }
+    
+    let html = '<div class="product-comparison-list">';
+    
+    products.forEach((product, index) => {
+        const avgPrice = parseFloat(product.avgPrice);
+        const minPrice = parseFloat(product.minPrice);
+        const maxPrice = parseFloat(product.maxPrice);
+        
+        html += `
+            <div class="product-item">
+                <div class="product-header" onclick="toggleProduct(${index})">
+                    <div>
+                        <strong>${product.productName}</strong>
+                        <span class="store-count">(${product.storeCount}개 거래처)</span>
+                    </div>
+                    <div class="product-summary">
+                        평균: ${avgPrice.toLocaleString()}원 | 
+                        최고: ${maxPrice.toLocaleString()}원 🔴 | 
+                        최저: ${minPrice.toLocaleString()}원 🔵
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="product-stores" id="product-${index}" style="display: none;">
+                    <table class="price-table">
+                        <thead>
+                            <tr>
+                                <th>거래처명</th>
+                                <th>가격</th>
+                                <th>등록일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        product.stores.forEach(store => {
+            const storePrice = parseFloat(store.price);
+            const priceClass = storePrice === maxPrice ? 'price-highest' : (storePrice === minPrice ? 'price-lowest' : '');
+            const badge = storePrice === maxPrice ? ' 🔴' : (storePrice === minPrice ? ' 🔵' : '');
+            
+            html += `
+                <tr>
+                    <td>${store.storeName}</td>
+                    <td class="${priceClass}">${storePrice.toLocaleString()}원${badge}</td>
+                    <td>${store.extractedAt}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 제품 펼치기/접기
+function toggleProduct(index) {
+    const element = document.getElementById(`product-${index}`);
+    const icon = element.previousElementSibling.querySelector('.toggle-icon');
+    
+    if (element.style.display === 'none') {
+        element.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        element.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+
+// 제품 검색 기능
+function setupProductSearch() {
+    const searchInput = document.getElementById('productSearchInput');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const productItems = document.querySelectorAll('.product-item');
+        
+        productItems.forEach(item => {
+            const productName = item.querySelector('strong').textContent.toLowerCase();
+            if (productName.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+}
+
+// 2. 거래처 TOP 10 표시
+function displayTopStores(stores) {
+    const container = document.getElementById('topStores');
+    
+    if (stores.length === 0) {
+        container.innerHTML = '<p class="loading">데이터가 없습니다.</p>';
+        return;
+    }
+    
+    const maxCount = stores[0].productCount;
+    
+    let html = '<table class="top-stores-table"><tbody>';
+    
+    stores.forEach((store, index) => {
+        const productCount = store.productCount;
+        const percentage = (productCount / maxCount) * 100;
+        const lastUpdate = new Date(store.lastUpdate);
+        const timeAgo = getTimeAgo(lastUpdate);
+        
+        html += `
+            <tr>
+                <td class="rank">${index + 1}</td>
+                <td class="store-name">${store.storeName}</td>
+                <td class="product-count">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${percentage}%"></div>
+                        <span class="progress-label">${productCount}개</span>
+                    </div>
+                </td>
+                <td class="last-update">${timeAgo}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// 3. 최근 가격 업데이트 표시
+function displayRecentPriceUpdates(updates) {
+    const container = document.getElementById('recentPriceUpdates');
+    
+    if (updates.length === 0) {
+        container.innerHTML = '<p class="loading">최근 가격 변경 내역이 없습니다.</p>';
+        return;
+    }
+    
+    let html = '<div class="price-updates-list">';
+    
+    updates.forEach(update => {
+        const changeDate = new Date(update.changeDate);
+        const timeAgo = getTimeAgo(changeDate);
+        const priceChange = parseFloat(update.priceChange);
+        const isIncrease = update.isIncrease;
+        const changeClass = isIncrease ? 'price-increase' : 'price-decrease';
+        const changeIcon = isIncrease ? '⬆️' : '⬇️';
+        
+        html += `
+            <div class="price-update-item">
+                <div class="update-header">
+                    <strong>${update.storeName}</strong>
+                    <span class="time-ago">${timeAgo}</span>
+                </div>
+                <div class="update-content">
+                    <span class="product-name">${update.productName}</span>
+                    <span class="${changeClass}">
+                        ${parseFloat(update.previousPrice).toLocaleString()}원 → 
+                        ${parseFloat(update.currentPrice).toLocaleString()}원 
+                        ${changeIcon}
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 시간 경과 표시 헬퍼 함수
+function getTimeAgo(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days}일 전`;
+    if (hours > 0) return `${hours}시간 전`;
+    if (minutes > 0) return `${minutes}분 전`;
+    return '방금 전';
 }
 
 // 거래처 관련 함수들
@@ -545,10 +754,17 @@ async function selectStore(storeId, storeName) {
 
 function goBackToStoreList() {
     // 거래처 상세 페이지 숨기기
-    document.getElementById('store-detail-page').style.display = 'none';
+    const detailPage = document.getElementById('store-detail-page');
+    if (detailPage) {
+        detailPage.style.display = 'none';
+    }
     
     // 거래처 목록 페이지 표시
-    document.getElementById('store-tab').style.display = 'block';
+    const storeTab = document.getElementById('store-tab');
+    if (storeTab) {
+        storeTab.classList.add('active');
+        storeTab.style.display = 'block';
+    }
     
     // URL 업데이트
     window.history.pushState({}, '', window.location.pathname);

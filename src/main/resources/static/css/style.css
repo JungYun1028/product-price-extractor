@@ -965,3 +965,229 @@ h2 {
     }
 }
 
+/* 대시보드 스타일 */
+.dashboard-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.dashboard-card h3 {
+    margin: 0 0 20px 0;
+    color: #004A98;
+    font-size: 1.3em;
+    border-bottom: 2px solid #0066CC;
+    padding-bottom: 10px;
+}
+
+/* 제품별 가격 비교 */
+.product-comparison-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.product-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.product-header {
+    background: #f9fafb;
+    padding: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.product-header:hover {
+    background: #f0f9ff;
+}
+
+.product-header strong {
+    font-size: 1.1em;
+    color: #004A98;
+}
+
+.store-count {
+    color: #666;
+    font-size: 0.9em;
+    margin-left: 8px;
+}
+
+.product-summary {
+    font-size: 0.9em;
+    color: #374151;
+}
+
+.toggle-icon {
+    margin-left: 10px;
+    color: #0066CC;
+    font-size: 0.8em;
+}
+
+.product-stores {
+    padding: 15px;
+    background: white;
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.price-table th {
+    background: #f3f4f6;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+}
+
+.price-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.price-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.price-highest {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.price-lowest {
+    color: #0066CC;
+    font-weight: 600;
+}
+
+/* 거래처 TOP 10 */
+.top-stores-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.top-stores-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.top-stores-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.top-stores-table .rank {
+    width: 40px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.2em;
+    color: #0066CC;
+}
+
+.top-stores-table .store-name {
+    font-weight: 600;
+    color: #004A98;
+}
+
+.top-stores-table .product-count {
+    width: 200px;
+}
+
+.top-stores-table .last-update {
+    width: 100px;
+    text-align: right;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.progress-bar-container {
+    position: relative;
+    background: #e5e7eb;
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #004A98, #0066CC);
+    border-radius: 15px;
+    transition: width 0.3s;
+}
+
+.progress-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    z-index: 1;
+}
+
+/* 최근 가격 업데이트 */
+.price-updates-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.price-update-item {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+}
+
+.price-update-item:last-child {
+    border-bottom: none;
+}
+
+.price-update-item:hover {
+    background: #f9fafb;
+}
+
+.update-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.update-header strong {
+    color: #004A98;
+}
+
+.time-ago {
+    color: #666;
+    font-size: 0.85em;
+}
+
+.update-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.product-name {
+    color: #374151;
+}
+
+.price-increase {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.price-decrease {
+    color: #059669;
+    font-weight: 600;
+}
+
